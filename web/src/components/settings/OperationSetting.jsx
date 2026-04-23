@@ -33,6 +33,7 @@ const OperationSetting = () => {
   let [inputs, setInputs] = useState({
     /* 额度相关 */
     QuotaForNewUser: 0,
+    ConcurrencyForNewUser: 5,
     PreConsumedQuota: 0,
     QuotaForInviter: 0,
     QuotaForInvitee: 0,

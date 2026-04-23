@@ -133,10 +133,15 @@ func InitOptionMap() {
 	common.OptionMap["TurnstileSiteKey"] = ""
 	common.OptionMap["TurnstileSecretKey"] = ""
 	common.OptionMap["QuotaForNewUser"] = strconv.Itoa(common.QuotaForNewUser)
+	common.OptionMap["ConcurrencyForNewUser"] = strconv.Itoa(common.ConcurrencyForNewUser)
 	common.OptionMap["QuotaForInviter"] = strconv.Itoa(common.QuotaForInviter)
 	common.OptionMap["QuotaForInvitee"] = strconv.Itoa(common.QuotaForInvitee)
 	common.OptionMap["QuotaRemindThreshold"] = strconv.Itoa(common.QuotaRemindThreshold)
 	common.OptionMap["PreConsumedQuota"] = strconv.Itoa(common.PreConsumedQuota)
+	common.OptionMap["UserConcurrencySlotTTLMinutes"] = strconv.Itoa(common.UserConcurrencySlotTTLMinutes)
+	common.OptionMap["UserConcurrencyWaitTimeoutSeconds"] = strconv.Itoa(common.UserConcurrencyWaitTimeoutSeconds)
+	common.OptionMap["UserConcurrencyPingIntervalSeconds"] = strconv.Itoa(common.UserConcurrencyPingIntervalSeconds)
+	common.OptionMap["UserConcurrencyWaitExtraSlots"] = strconv.Itoa(common.UserConcurrencyWaitExtraSlots)
 	common.OptionMap["ModelRequestRateLimitCount"] = strconv.Itoa(setting.ModelRequestRateLimitCount)
 	common.OptionMap["ModelRequestRateLimitDurationMinutes"] = strconv.Itoa(setting.ModelRequestRateLimitDurationMinutes)
 	common.OptionMap["ModelRequestRateLimitSuccessCount"] = strconv.Itoa(setting.ModelRequestRateLimitSuccessCount)
@@ -477,6 +482,8 @@ func updateOptionMap(key string, value string) (err error) {
 		common.TurnstileSecretKey = value
 	case "QuotaForNewUser":
 		common.QuotaForNewUser, _ = strconv.Atoi(value)
+	case "ConcurrencyForNewUser":
+		common.ConcurrencyForNewUser, _ = strconv.Atoi(value)
 	case "QuotaForInviter":
 		common.QuotaForInviter, _ = strconv.Atoi(value)
 	case "QuotaForInvitee":
@@ -485,6 +492,14 @@ func updateOptionMap(key string, value string) (err error) {
 		common.QuotaRemindThreshold, _ = strconv.Atoi(value)
 	case "PreConsumedQuota":
 		common.PreConsumedQuota, _ = strconv.Atoi(value)
+	case "UserConcurrencySlotTTLMinutes":
+		common.UserConcurrencySlotTTLMinutes, _ = strconv.Atoi(value)
+	case "UserConcurrencyWaitTimeoutSeconds":
+		common.UserConcurrencyWaitTimeoutSeconds, _ = strconv.Atoi(value)
+	case "UserConcurrencyPingIntervalSeconds":
+		common.UserConcurrencyPingIntervalSeconds, _ = strconv.Atoi(value)
+	case "UserConcurrencyWaitExtraSlots":
+		common.UserConcurrencyWaitExtraSlots, _ = strconv.Atoi(value)
 	case "ModelRequestRateLimitCount":
 		setting.ModelRequestRateLimitCount, _ = strconv.Atoi(value)
 	case "ModelRequestRateLimitDurationMinutes":

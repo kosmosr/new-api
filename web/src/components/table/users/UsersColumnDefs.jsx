@@ -170,6 +170,16 @@ const renderQuotaUsage = (text, record, t) => {
   );
 };
 
+const renderConcurrencyUsage = (text, record, t) => {
+  const current = parseInt(record.current_concurrency) || 0;
+  const limit = parseInt(record.concurrency) || 0;
+  return (
+    <Tag color='white' shape='circle'>
+      {t('当前并发数')}: {renderNumber(current)} / {renderNumber(limit)}
+    </Tag>
+  );
+};
+
 /**
  * Render invite information
  */
@@ -330,6 +340,11 @@ export const getUsersColumns = ({
       title: t('剩余额度/总额度'),
       key: 'quota_usage',
       render: (text, record) => renderQuotaUsage(text, record, t),
+    },
+    {
+      title: t('剩余并发/总并发'),
+      key: 'concurrency_usage',
+      render: (text, record) => renderConcurrencyUsage(text, record, t),
     },
     {
       title: t('分组'),

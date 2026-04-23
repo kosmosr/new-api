@@ -28,6 +28,10 @@ const PerformanceSetting = () => {
     'performance_setting.disk_cache_threshold_mb': 10,
     'performance_setting.disk_cache_max_size_mb': 1024,
     'performance_setting.disk_cache_path': '',
+    UserConcurrencySlotTTLMinutes: 30,
+    UserConcurrencyWaitTimeoutSeconds: 30,
+    UserConcurrencyPingIntervalSeconds: 10,
+    UserConcurrencyWaitExtraSlots: 20,
   });
 
   let [loading, setLoading] = useState(false);

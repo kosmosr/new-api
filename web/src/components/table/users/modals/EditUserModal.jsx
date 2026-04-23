@@ -92,6 +92,8 @@ const EditUserModal = (props) => {
     email: '',
     quota: 0,
     quota_amount: 0,
+    concurrency: 5,
+    current_concurrency: 0,
     group: 'default',
     remark: '',
   });
@@ -150,6 +152,7 @@ const EditUserModal = (props) => {
     let payload = { ...values };
     delete payload.quota;
     delete payload.quota_amount;
+    delete payload.current_concurrency;
     if (userId) {
       payload.id = parseInt(userId);
     }
@@ -365,6 +368,24 @@ const EditUserModal = (props) => {
                           allowAdditions
                           search
                           rules={[{ required: true, message: t('请选择分组') }]}
+                        />
+                      </Col>
+
+                      <Col span={12}>
+                        <Form.InputNumber
+                          field='concurrency'
+                          label={t('并发数')}
+                          min={1}
+                          style={{ width: '100%' }}
+                        />
+                      </Col>
+
+                      <Col span={12}>
+                        <Form.InputNumber
+                          field='current_concurrency'
+                          label={t('当前并发数')}
+                          style={{ width: '100%' }}
+                          readonly
                         />
                       </Col>
 

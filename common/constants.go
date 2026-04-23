@@ -102,6 +102,7 @@ var TelegramBotToken = ""
 var TelegramBotName = ""
 
 var QuotaForNewUser = 0
+var ConcurrencyForNewUser = 5
 var QuotaForInviter = 0
 var QuotaForInvitee = 0
 var ChannelDisableThreshold = 5.0
@@ -109,6 +110,10 @@ var AutomaticDisableChannelEnabled = false
 var AutomaticEnableChannelEnabled = false
 var QuotaRemindThreshold = 1000
 var PreConsumedQuota = 500
+var UserConcurrencySlotTTLMinutes = 30
+var UserConcurrencyWaitTimeoutSeconds = 30
+var UserConcurrencyPingIntervalSeconds = 10
+var UserConcurrencyWaitExtraSlots = 20
 
 var RetryTimes = 0
 

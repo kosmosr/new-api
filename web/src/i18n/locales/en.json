@@ -3673,6 +3673,15 @@
     "默认折叠侧边栏": "Default collapse sidebar",
     "默认测试模型": "Default Test Model",
     "默认用户消息": "Default User Message",
-    "默认补全倍率": "Default completion ratio"
+    "默认补全倍率": "Default completion ratio",
+    "并发数": "Concurrency",
+    "请输入并发数": "Enter concurrency",
+    "当前并发数": "Current concurrency",
+    "剩余并发/总并发": "Current/Max concurrency",
+    "新用户默认并发数": "Default concurrency for new users",
+    "并发槽位过期时间（分钟）": "Concurrency slot TTL (minutes)",
+    "并发等待超时（秒）": "Concurrency wait timeout (seconds)",
+    "并发等待 Ping 间隔（秒）": "Concurrency wait ping interval (seconds)",
+    "并发等待额外队列深度": "Additional concurrency wait queue depth"
   }
 }

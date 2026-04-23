@@ -72,6 +72,10 @@ export default function SettingsPerformance(props) {
     'performance_setting.monitor_cpu_threshold': 90,
     'performance_setting.monitor_memory_threshold': 90,
     'performance_setting.monitor_disk_threshold': 95,
+    UserConcurrencySlotTTLMinutes: 30,
+    UserConcurrencyWaitTimeoutSeconds: 30,
+    UserConcurrencyPingIntervalSeconds: 10,
+    UserConcurrencyWaitExtraSlots: 20,
   });
   const refForm = useRef();
   const [inputsRow, setInputsRow] = useState(inputs);
@@ -386,6 +390,44 @@ export default function SettingsPerformance(props) {
                     'performance_setting.monitor_disk_threshold',
                   )}
                   disabled={!inputs['performance_setting.monitor_enabled']}
+                />
+              </Col>
+            </Row>
+            <Row gutter={16} style={{ marginTop: 16 }}>
+              <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+                <Form.InputNumber
+                  field={'UserConcurrencySlotTTLMinutes'}
+                  label={t('并发槽位过期时间（分钟）')}
+                  min={1}
+                  onChange={handleFieldChange('UserConcurrencySlotTTLMinutes')}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+                <Form.InputNumber
+                  field={'UserConcurrencyWaitTimeoutSeconds'}
+                  label={t('并发等待超时（秒）')}
+                  min={1}
+                  onChange={handleFieldChange(
+                    'UserConcurrencyWaitTimeoutSeconds',
+                  )}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+                <Form.InputNumber
+                  field={'UserConcurrencyPingIntervalSeconds'}
+                  label={t('并发等待 Ping 间隔（秒）')}
+                  min={1}
+                  onChange={handleFieldChange(
+                    'UserConcurrencyPingIntervalSeconds',
+                  )}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+                <Form.InputNumber
+                  field={'UserConcurrencyWaitExtraSlots'}
+                  label={t('并发等待额外队列深度')}
+                  min={0}
+                  onChange={handleFieldChange('UserConcurrencyWaitExtraSlots')}
                 />
               </Col>
             </Row>

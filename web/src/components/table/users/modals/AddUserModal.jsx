@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { API, showError, showSuccess } from '../../../../helpers';
 import { useIsMobile } from '../../../../hooks/common/useIsMobile';
 import {
@@ -42,6 +42,7 @@ const AddUserModal = (props) => {
   const { t } = useTranslation();
   const formApiRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [defaultConcurrency, setDefaultConcurrency] = useState(5);
   const isMobile = useIsMobile();
 
   const getInitValues = () => ({
@@ -49,7 +50,28 @@ const AddUserModal = (props) => {
     display_name: '',
     password: '',
     remark: '',
+    concurrency: defaultConcurrency,
   });
+
+  useEffect(() => {
+    if (!props.visible) return;
+    const loadDefaultConcurrency = async () => {
+      try {
+        const res = await API.get('/api/option/');
+        const { success, data } = res.data;
+        if (!success || !Array.isArray(data)) return;
+        const option = data.find((item) => item.key === 'ConcurrencyForNewUser');
+        const concurrency = parseInt(option?.value, 10);
+        if (Number.isFinite(concurrency) && concurrency > 0) {
+          setDefaultConcurrency(concurrency);
+          formApiRef.current?.setValue('concurrency', concurrency);
+        }
+      } catch (error) {
+        // keep fallback default value
+      }
+    };
+    loadDefaultConcurrency();
+  }, [props.visible]);
 
   const submit = async (values) => {
     setLoading(true);
@@ -171,6 +193,15 @@ const AddUserModal = (props) => {
                       label={t('备注')}
                       placeholder={t('请输入备注（仅管理员可见）')}
                       showClear
+                    />
+                  </Col>
+                  <Col span={24}>
+                    <Form.InputNumber
+                      field='concurrency'
+                      label={t('并发数')}
+                      placeholder={t('请输入并发数')}
+                      min={1}
+                      style={{ width: '100%' }}
                     />
                   </Col>
                 </Row>

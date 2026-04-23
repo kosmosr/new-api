@@ -29,6 +29,11 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+type adminUserResponse struct {
+	model.User
+	CurrentConcurrency int `json:"current_concurrency"`
+}
+
 func Login(c *gin.Context) {
 	if !common.PasswordLoginEnabled {
 		common.ApiErrorI18n(c, i18n.MsgUserPasswordLoginDisabled)
@@ -240,7 +245,7 @@ func GetAllUsers(c *gin.Context) {
 	}
 
 	pageInfo.SetTotal(int(total))
-	pageInfo.SetItems(users)
+	pageInfo.SetItems(withCurrentConcurrency(c, users))
 
 	common.ApiSuccess(c, pageInfo)
 	return
@@ -257,9 +262,40 @@ func SearchUsers(c *gin.Context) {
 	}
 
 	pageInfo.SetTotal(int(total))
-	pageInfo.SetItems(users)
+	pageInfo.SetItems(withCurrentConcurrency(c, users))
 	common.ApiSuccess(c, pageInfo)
 	return
+}
+
+func withCurrentConcurrency(c *gin.Context, users []*model.User) []adminUserResponse {
+	if len(users) == 0 {
+		return []adminUserResponse{}
+	}
+
+	serviceUsers := make([]service.UserConcurrencyLoadTarget, 0, len(users))
+	for _, user := range users {
+		serviceUsers = append(serviceUsers, service.UserConcurrencyLoadTarget{
+			UserID:         user.Id,
+			MaxConcurrency: user.Concurrency,
+		})
+	}
+
+	loadInfo, err := service.NewUserConcurrencyService(nil).GetUsersLoadBatch(c.Request.Context(), serviceUsers)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("failed to load user concurrency batch: %v", err))
+	}
+
+	resp := make([]adminUserResponse, 0, len(users))
+	for _, user := range users {
+		item := adminUserResponse{
+			User: *user,
+		}
+		if info := loadInfo[user.Id]; info != nil {
+			item.CurrentConcurrency = info.CurrentConcurrency
+		}
+		resp = append(resp, item)
+	}
+	return resp
 }
 
 func GetUser(c *gin.Context) {
@@ -278,10 +314,17 @@ func GetUser(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserNoPermissionSameLevel)
 		return
 	}
+	currentConcurrency, err := service.NewUserConcurrencyService(nil).GetUserConcurrency(c.Request.Context(), user.Id)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("failed to load user current concurrency: %v", err))
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
-		"data":    user,
+		"data": adminUserResponse{
+			User:               *user,
+			CurrentConcurrency: currentConcurrency,
+		},
 	})
 	return
 }
@@ -543,7 +586,7 @@ func GetUserModels(c *gin.Context) {
 
 func UpdateUser(c *gin.Context) {
 	var updatedUser model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&updatedUser)
+	err := common.DecodeJson(c.Request.Body, &updatedUser)
 	if err != nil || updatedUser.Id == 0 {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
@@ -568,6 +611,9 @@ func UpdateUser(c *gin.Context) {
 	if myRole <= updatedUser.Role && myRole != common.RoleRootUser {
 		common.ApiErrorI18n(c, i18n.MsgUserCannotCreateHigherLevel)
 		return
+	}
+	if updatedUser.Concurrency <= 0 {
+		updatedUser.Concurrency = originUser.Concurrency
 	}
 	if updatedUser.Password == "$I_LOVE_U" {
 		updatedUser.Password = "" // rollback to what it should be
@@ -803,7 +849,7 @@ func DeleteSelf(c *gin.Context) {
 
 func CreateUser(c *gin.Context) {
 	var user model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	err := common.DecodeJson(c.Request.Body, &user)
 	user.Username = strings.TrimSpace(user.Username)
 	if err != nil || user.Username == "" || user.Password == "" {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
@@ -816,6 +862,12 @@ func CreateUser(c *gin.Context) {
 	if user.DisplayName == "" {
 		user.DisplayName = user.Username
 	}
+	if user.Role == 0 {
+		user.Role = common.RoleCommonUser
+	}
+	if user.Concurrency <= 0 {
+		user.Concurrency = service.GetConcurrencyForNewUser()
+	}
 	myRole := c.GetInt("role")
 	if user.Role >= myRole {
 		common.ApiErrorI18n(c, i18n.MsgUserCannotCreateHigherLevel)
@@ -826,6 +878,8 @@ func CreateUser(c *gin.Context) {
 		Username:    user.Username,
 		Password:    user.Password,
 		DisplayName: user.DisplayName,
+		Concurrency: user.Concurrency,
+		Remark:      user.Remark,
 		Role:        user.Role, // 保持管理员设置的角色
 	}
 	if err := cleanUser.Insert(0); err != nil {

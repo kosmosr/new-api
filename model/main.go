@@ -82,6 +82,7 @@ func createRootAccountIfNeed() error {
 			DisplayName: "Root User",
 			AccessToken: nil,
 			Quota:       100000000,
+			Concurrency: common.ConcurrencyForNewUser,
 		}
 		DB.Create(&rootUser)
 	}
@@ -285,10 +286,16 @@ func migrateDB() error {
 		return err
 	}
 	if common.UsingSQLite {
+		if err := ensureUserConcurrencyColumnSQLite(); err != nil {
+			return err
+		}
 		if err := ensureSubscriptionPlanTableSQLite(); err != nil {
 			return err
 		}
 	} else {
+		if err := ensureUserConcurrencyColumn(); err != nil {
+			return err
+		}
 		if err := DB.AutoMigrate(&SubscriptionPlan{}); err != nil {
 			return err
 		}
@@ -353,10 +360,16 @@ func migrateDBFast() error {
 		}
 	}
 	if common.UsingSQLite {
+		if err := ensureUserConcurrencyColumnSQLite(); err != nil {
+			return err
+		}
 		if err := ensureSubscriptionPlanTableSQLite(); err != nil {
 			return err
 		}
 	} else {
+		if err := ensureUserConcurrencyColumn(); err != nil {
+			return err
+		}
 		if err := DB.AutoMigrate(&SubscriptionPlan{}); err != nil {
 			return err
 		}
@@ -376,6 +389,39 @@ func migrateLOGDB() error {
 type sqliteColumnDef struct {
 	Name string
 	DDL  string
+}
+
+func ensureUserConcurrencyColumn() error {
+	if common.UsingSQLite {
+		return ensureUserConcurrencyColumnSQLite()
+	}
+	if DB.Migrator().HasColumn(&User{}, "concurrency") {
+		return backfillUserConcurrency()
+	}
+	if err := DB.Migrator().AddColumn(&User{}, "concurrency"); err != nil {
+		return err
+	}
+	return backfillUserConcurrency()
+}
+
+func ensureUserConcurrencyColumnSQLite() error {
+	if !common.UsingSQLite {
+		return nil
+	}
+	if !DB.Migrator().HasTable("users") {
+		return nil
+	}
+	if DB.Migrator().HasColumn(&User{}, "concurrency") {
+		return backfillUserConcurrency()
+	}
+	if err := DB.Exec("ALTER TABLE `users` ADD COLUMN `concurrency` integer DEFAULT 5").Error; err != nil {
+		return err
+	}
+	return backfillUserConcurrency()
+}
+
+func backfillUserConcurrency() error {
+	return DB.Model(&User{}).Where("concurrency IS NULL OR concurrency <= 0").Update("concurrency", 5).Error
 }
 
 func ensureSubscriptionPlanTableSQLite() error {

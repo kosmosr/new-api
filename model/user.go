@@ -37,6 +37,7 @@ type User struct {
 	VerificationCode string         `json:"verification_code" gorm:"-:all"`                                    // this field is only for Email verification, don't save it to database!
 	AccessToken      *string        `json:"access_token" gorm:"type:char(32);column:access_token;uniqueIndex"` // this token is for system management
 	Quota            int            `json:"quota" gorm:"type:int;default:0"`
+	Concurrency      int            `json:"concurrency" gorm:"type:int;default:5"`
 	UsedQuota        int            `json:"used_quota" gorm:"type:int;default:0;column:used_quota"` // used quota
 	RequestCount     int            `json:"request_count" gorm:"type:int;default:0;"`               // request number
 	Group            string         `json:"group" gorm:"type:varchar(64);default:'default'"`
@@ -54,13 +55,14 @@ type User struct {
 
 func (user *User) ToBaseUser() *UserBase {
 	cache := &UserBase{
-		Id:       user.Id,
-		Group:    user.Group,
-		Quota:    user.Quota,
-		Status:   user.Status,
-		Username: user.Username,
-		Setting:  user.Setting,
-		Email:    user.Email,
+		Id:          user.Id,
+		Group:       user.Group,
+		Quota:       user.Quota,
+		Concurrency: user.Concurrency,
+		Status:      user.Status,
+		Username:    user.Username,
+		Setting:     user.Setting,
+		Email:       user.Email,
 	}
 	return cache
 }
@@ -385,6 +387,12 @@ func (user *User) Insert(inviterId int) error {
 		}
 	}
 	user.Quota = common.QuotaForNewUser
+	if user.Concurrency <= 0 {
+		user.Concurrency = common.ConcurrencyForNewUser
+		if user.Concurrency <= 0 {
+			user.Concurrency = 5
+		}
+	}
 	//user.SetAccessToken(common.GetUUID())
 	user.AffCode = common.GetRandomString(4)
 
@@ -444,6 +452,12 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 		}
 	}
 	user.Quota = common.QuotaForNewUser
+	if user.Concurrency <= 0 {
+		user.Concurrency = common.ConcurrencyForNewUser
+		if user.Concurrency <= 0 {
+			user.Concurrency = 5
+		}
+	}
 	user.AffCode = common.GetRandomString(4)
 
 	// 初始化用户设置
@@ -523,6 +537,7 @@ func (user *User) Edit(updatePassword bool) error {
 		"username":     newUser.Username,
 		"display_name": newUser.DisplayName,
 		"group":        newUser.Group,
+		"concurrency":  newUser.Concurrency,
 		"remark":       newUser.Remark,
 	}
 	if updatePassword {

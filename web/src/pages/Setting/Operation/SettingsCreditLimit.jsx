@@ -33,6 +33,7 @@ export default function SettingsCreditLimit(props) {
   const [loading, setLoading] = useState(false);
   const [inputs, setInputs] = useState({
     QuotaForNewUser: '',
+    ConcurrencyForNewUser: '',
     PreConsumedQuota: '',
     QuotaForInviter: '',
     QuotaForInvitee: '',
@@ -109,6 +110,21 @@ export default function SettingsCreditLimit(props) {
                     setInputs({
                       ...inputs,
                       QuotaForNewUser: String(value),
+                    })
+                  }
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={8}>
+                <Form.InputNumber
+                  label={t('新用户默认并发数')}
+                  field={'ConcurrencyForNewUser'}
+                  step={1}
+                  min={1}
+                  placeholder={''}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      ConcurrencyForNewUser: String(value),
                     })
                   }
                 />

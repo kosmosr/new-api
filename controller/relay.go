@@ -88,6 +88,10 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	defer func() {
 		if newAPIError != nil {
 			logger.LogError(c, fmt.Sprintf("relay error: %s", newAPIError.Error()))
+			if c.GetBool(relayWaitStreamStartedKey) {
+				writeStartedRelayStreamError(c, relayFormat, newAPIError)
+				return
+			}
 			newAPIError.SetMessage(common.MessageWithRequestId(newAPIError.Error(), requestId))
 			switch relayFormat {
 			case types.RelayFormatOpenAIRealtime:
@@ -120,6 +124,18 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	if err != nil {
 		newAPIError = types.NewError(err, types.ErrorCodeGenRelayInfoFailed)
 		return
+	}
+
+	userReleaseFunc, acquired := acquireUserConcurrencySlot(c, relayFormat, &typesafeRelayInfo{
+		RequestId: relayInfo.RequestId,
+		UserId:    relayInfo.UserId,
+		IsStream:  relayInfo.IsStream,
+	}, ws)
+	if !acquired {
+		return
+	}
+	if userReleaseFunc != nil {
+		defer userReleaseFunc()
 	}
 
 	needSensitiveCheck := setting.ShouldCheckPromptSensitive()
